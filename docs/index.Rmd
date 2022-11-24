@@ -1,7 +1,7 @@
 ---
-title: "Your A4 Report Title (TODO: Revise title)"
-author: "Your Name"
-date: '2022-11-01'
+title: "Racism and its Roots: Mass Incarceration"
+author: "Sarah Haworth"
+date: '2022-11-21'
 output: html_document
 ---
 
@@ -11,35 +11,137 @@ source("../source/analysis.R")
 ```
 
 ## Abstract 
-[TODO: Include a short abstract (about 50 words)]
-
-# Test (TODO: Remove before submission!!)
-```{r echo=FALSE}
-q1_string <- test_query1()
-num <- 5
-```
-As you know, this is a markdown report. The [R Markdown Cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf) is **useful!**
-
-* Here's a test of a dynamic variable. Say **"`r q1_string`!!!** 
-* Here's another test. A vector
-of numbers: `r test_query2(num)`.
-
-Recall that _{r echo=TRUE}_ can be used to display the code, 
-which is very useful when developing and debugging a report. Here's an example: 
-
-```{r echo=TRUE}
-num <- 5
-sum <- sum(test_query2(num))
-print(sum)
-```
+This report creates multiple charts that examine the total jail population in the US based off a variety of factors including race, year, state, and urbanicity. The data is sourced from *Vera Institute of Justice*. It answers questions about how mass incarceration has a much greater impact on marginalized groups compared to white people.
 
 ## Introduction 
-[TODO]
+Mass incarceration has grown exponentially in the U.S. from 1970 to 2000 thanks to elected officials and policymakers. These people in power have been making deliberate decisions that led to the rise of the prison population. These decisions have targeted the incarceration of people of color, immigrants, and people experiencing poverty. Black people specifically have been subject to over policing and over-arrest for low-level behavior. According to the *Vera Institute of Justice*, black men comprise about 13% of the total male population in the U.S., but 35% of the incarcerated population. 
+
+If incarceration actually made society a safer place, the United States would be the safest nation in the world. So why does mass incarceration exist? To reinforce the racism rooted in the United States. In 1865, when the 13th Amendment was passed and the Civil War was coming to an end, the first prison boom involving the incarceration of a disproportionate number of black people was triggered. Later, in 1970, politicians were making decisions to hinder the Civil Rights Movement and link crime with race. Speeches and comments were tainted with explicit racial undertones. This type of conduct by politicians is what fostered the rise of mass incarceration.  
+
+The data set explored in this report will help to understand the difference between the total population, the population of white people in jail, and the population of different marginalized groups in jail. It allows researchers to analyze the trends between groups based on a few different factors including age, sex (M/F), and location. The direct stakeholders that are impacted by this research include the marginalized groups of society, who can clearly see how the decisions of politicians have affected their lives, and white people, who don’t understand the privilege that they possess due to the color of their skin. 
+
 
 ## Data Summary 
-[TODO]
+1993 was the year where the black jail population was at its highest.
 
-[TODO ... other sections ... See Canvas for details]
+The state with the highest number of black people in jail is California. This doesn’t convey many trends because the state with the highest number of people in jail, and the state with the largest total population is also California. 
 
-_All the very best with your work!_
+The state with the highest rate of black people in jail is Utah. It is interesting to note that the state with the highest rate of white people in jail is Louisiana.
+
+
+## Growth of the U.S. Prison Population
+```{r, echo = TRUE}
+library(scales)
+library(ggplot2)
+options(timeout = 500)
+incarcerated_trend <- read.csv("https://raw.githubusercontent.com/vera-institute/incarceration-trends/master/incarceration_trends.csv")
+
+get_year_jail_pop <- function() {
+  year_and_total_jail <- incarcerated_trend %>%
+    arrange(year) %>%
+    select(year, total_jail_pop) %>%
+    filter(!is.na(total_jail_pop))
+    return(year_and_total_jail)   
+}
+
+plot_jail_pop_for_us <- function()  {
+  plot_jail <- ggplot(data = get_year_jail_pop(), aes(y = total_jail_pop, x = year)) +
+    geom_bar(stat = 'identity') +
+    labs(title = "Increase of Jail Population in U.S. (1970-2018).", caption = "Figure 1. Increase of Jail Population in U.S. (1970-2018). 
+         This chart shows the growth in total jail population in the U.S. from the year 1970 to 2018.
+         Data source: Vera Institute of Justice" ) + 
+    xlab("Year") + ylab("Total Jail Population") +
+    scale_y_continuous(labels = comma_format(big.mark = ".", decimal.mark = ","))
+  return(plot_jail)  
+}
+plot_jail_pop_for_us()
+```
+
+How has the total U.S. jail population changed over the given time period? The data shows that the jail population in the U.S. has increased by 400% from 1970 to 2018 (starting at around 200,000 people and rising to around 800,000 people). The jail population was maintained steadily at roughly 200,000 people from 1970-1980. From 1980 to about 2005, the population increased drastically. From 2005 to 2018 the population growth has plateaued at around 800,000 people.
+
+## Growth of Prison Population by State
+```{r}
+get_jail_pop_by_states <- function(states) {
+  df_of_year_state_pop <- incarcerated_trend %>%
+    filter(states == state) %>%
+    select(year, state, total_jail_pop) %>%
+    group_by(state, year) %>%
+    summarize(total_jail_pop = sum(total_jail_pop, na.rm = TRUE),
+              .groups = "drop")  
+  return(df_of_year_state_pop)
+}
+
+plot_jail_pop_by_states <- function(states) {
+  plot_state_jail <- ggplot(data = get_jail_pop_by_states(states), aes(x = year, y = total_jail_pop, group = state, color = state)) +
+    geom_line() +
+    labs(title = "Total Jail Population by State", caption = "Figure 2. Jail Population by State. 
+         This chart shows the growth in total jail population for select states from the year 1970 to 2018.
+         Data source: Vera Institute of Justice" ) +
+    xlab("Year") + ylab("Total Jail Population")
+  return(plot_state_jail)
+}
+plot_jail_pop_by_states("WA")
+```
+
+How has the U.S. jail population changed over time per state? In all states the data trend remains the same, where the jail population increased from 1970 to 2018. The range of increased populations varies among states. For example, Colorado and Washington experienced a much greater increase in jail population compared to Oregon and Minnesota. 
+
+## Exploring the Urbanicity of Prison Populations
+```{r}
+get_urbanicity_jail_pop <- function() {
+  select_df <- incarcerated_trend %>%
+    select(total_jail_pop, urbanicity) %>%
+    group_by(urbanicity) %>%
+    subset(total_jail_pop != 0) %>%
+    summarize(total_jail_pop = sum(total_jail_pop, na.rm = TRUE),
+              .groups = "drop") 
+  return(select_df)   
+}
+
+bar_graph_by_urbanciity <- function() {
+  plot_urbanicity <- ggplot(data = get_urbanicity_jail_pop(), aes(y = total_jail_pop, x = urbanicity)) +
+    geom_bar(stat = 'identity') +
+    labs(title = "Increase In Jail Population Based On Urbanicity .", caption = 
+           "Figure 3. Jail population totals grouped by urbanicity. 
+         This chart shows the total jail population in the U.S. based on the urbanicity of the area.
+         Data source: Vera Institute of Justice" ) + 
+    xlab("Urbanicity") + ylab("Total Jail Population") +
+    scale_y_continuous(labels = comma_format(big.mark = ".", decimal.mark = ","))
+  return(plot_urbanicity)
+}
+bar_graph_by_urbanciity()
+```
+
+Is urbanicity related to total jail population? Urban areas have the greatest jail population, closely followed by small/mid areas. Rural areas have the smallest jail population, but suburban areas only have a larger population by a few 100,000. 
+
+## How the Jail Population Differed by State in 2018.
+```{r}
+jail_pop_per_state <- function() {
+  df_of_state <- incarcerated_trend %>%
+    filter(year == 2018) %>%
+    select(state, total_jail_pop) %>%
+    group_by(state) %>%
+    summarize(total_jail_pop = sum(total_jail_pop, na.rm = TRUE),
+              .groups = "drop")
+  return(df_of_state)
+}
+
+jail_pop_map <- function() {
+  state_shape <- map_data("state") %>% 
+  rename(state = region) %>% 
+  left_join(jail_pop_per_state(), by="state")
+  map <- ggplot(state_shape) + 
+    geom_polygon(mapping = aes(x = long, y = lat, group = group),color = "white", size = .1) + 
+    coord_map() +
+    labs(title = "Total Jail Population By State In 2018.", caption = 
+           "Figure 4. Jail population totals grouped by state in the year 2018. 
+         This chart shows the total jail population in the U.S. per state in the year 2018.
+         Data source: Vera Institute of Justice" )
+  return(map)
+}
+jail_pop_map()
+```
+
+How does the jail population vary among states in the year 2018? Some states have very similar jail populations, like Arizona and Colorado. Other states, like California, have much greater jail populations. Overall, there is a greater variation among states, and the jail population does not necessarily depend on the region. It seems that the total jail population is in proportion to the total population of each state.
+
+
 

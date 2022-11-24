@@ -18,14 +18,14 @@ get_data <- function(num_records=-1) {
 # Return the list of states in a region.  The regions are: 
 #    Midwest, Northeast, South, West
 #----------------------------------------------------------------------------#
-states_in_region <- function(p_region) {
-  the_states <- incarceration_df %>%
-    filter(region == p_region) %>%
+states_in_region <- function(region) {
+  the_states <- incarcerated_trend %>%
+    filter(region == region) %>%
     distinct(state) %>%
     pull(state)
   return(the_states)
 }
-
+states_in_region(Midwest)
 #----------------------------------------------------------------------------#
 # Return the list of divisions in a region. The regions are: 
 # Midwest, Northeast, South, West
