@@ -31,29 +31,6 @@ The state with the highest rate of black people in jail is Utah. It is interesti
 
 ## Growth of the U.S. Prison Population
 ```{r, echo = TRUE}
-library(scales)
-library(ggplot2)
-options(timeout = 500)
-incarcerated_trend <- read.csv("https://raw.githubusercontent.com/vera-institute/incarceration-trends/master/incarceration_trends.csv")
-
-get_year_jail_pop <- function() {
-  year_and_total_jail <- incarcerated_trend %>%
-    arrange(year) %>%
-    select(year, total_jail_pop) %>%
-    filter(!is.na(total_jail_pop))
-    return(year_and_total_jail)   
-}
-
-plot_jail_pop_for_us <- function()  {
-  plot_jail <- ggplot(data = get_year_jail_pop(), aes(y = total_jail_pop, x = year)) +
-    geom_bar(stat = 'identity') +
-    labs(title = "Increase of Jail Population in U.S. (1970-2018).", caption = "Figure 1. Increase of Jail Population in U.S. (1970-2018). 
-         This chart shows the growth in total jail population in the U.S. from the year 1970 to 2018.
-         Data source: Vera Institute of Justice" ) + 
-    xlab("Year") + ylab("Total Jail Population") +
-    scale_y_continuous(labels = comma_format(big.mark = ".", decimal.mark = ","))
-  return(plot_jail)  
-}
 plot_jail_pop_for_us()
 ```
 
@@ -61,25 +38,6 @@ How has the total U.S. jail population changed over the given time period? The d
 
 ## Growth of Prison Population by State
 ```{r}
-get_jail_pop_by_states <- function(states) {
-  df_of_year_state_pop <- incarcerated_trend %>%
-    filter(states == state) %>%
-    select(year, state, total_jail_pop) %>%
-    group_by(state, year) %>%
-    summarize(total_jail_pop = sum(total_jail_pop, na.rm = TRUE),
-              .groups = "drop")  
-  return(df_of_year_state_pop)
-}
-
-plot_jail_pop_by_states <- function(states) {
-  plot_state_jail <- ggplot(data = get_jail_pop_by_states(states), aes(x = year, y = total_jail_pop, group = state, color = state)) +
-    geom_line() +
-    labs(title = "Total Jail Population by State", caption = "Figure 2. Jail Population by State. 
-         This chart shows the growth in total jail population for select states from the year 1970 to 2018.
-         Data source: Vera Institute of Justice" ) +
-    xlab("Year") + ylab("Total Jail Population")
-  return(plot_state_jail)
-}
 plot_jail_pop_by_states("WA")
 ```
 
@@ -87,27 +45,6 @@ How has the U.S. jail population changed over time per state? In all states the 
 
 ## Exploring the Urbanicity of Prison Populations
 ```{r}
-get_urbanicity_jail_pop <- function() {
-  select_df <- incarcerated_trend %>%
-    select(total_jail_pop, urbanicity) %>%
-    group_by(urbanicity) %>%
-    subset(total_jail_pop != 0) %>%
-    summarize(total_jail_pop = sum(total_jail_pop, na.rm = TRUE),
-              .groups = "drop") 
-  return(select_df)   
-}
-
-bar_graph_by_urbanciity <- function() {
-  plot_urbanicity <- ggplot(data = get_urbanicity_jail_pop(), aes(y = total_jail_pop, x = urbanicity)) +
-    geom_bar(stat = 'identity') +
-    labs(title = "Increase In Jail Population Based On Urbanicity .", caption = 
-           "Figure 3. Jail population totals grouped by urbanicity. 
-         This chart shows the total jail population in the U.S. based on the urbanicity of the area.
-         Data source: Vera Institute of Justice" ) + 
-    xlab("Urbanicity") + ylab("Total Jail Population") +
-    scale_y_continuous(labels = comma_format(big.mark = ".", decimal.mark = ","))
-  return(plot_urbanicity)
-}
 bar_graph_by_urbanciity()
 ```
 
@@ -115,29 +52,6 @@ Is urbanicity related to total jail population? Urban areas have the greatest ja
 
 ## How the Jail Population Differed by State in 2018.
 ```{r}
-jail_pop_per_state <- function() {
-  df_of_state <- incarcerated_trend %>%
-    filter(year == 2018) %>%
-    select(state, total_jail_pop) %>%
-    group_by(state) %>%
-    summarize(total_jail_pop = sum(total_jail_pop, na.rm = TRUE),
-              .groups = "drop")
-  return(df_of_state)
-}
-
-jail_pop_map <- function() {
-  state_shape <- map_data("state") %>% 
-  rename(state = region) %>% 
-  left_join(jail_pop_per_state(), by="state")
-  map <- ggplot(state_shape) + 
-    geom_polygon(mapping = aes(x = long, y = lat, group = group),color = "white", size = .1) + 
-    coord_map() +
-    labs(title = "Total Jail Population By State In 2018.", caption = 
-           "Figure 4. Jail population totals grouped by state in the year 2018. 
-         This chart shows the total jail population in the U.S. per state in the year 2018.
-         Data source: Vera Institute of Justice" )
-  return(map)
-}
 jail_pop_map()
 ```
 
